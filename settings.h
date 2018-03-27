@@ -17,8 +17,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 See more at http://blog.squix.ch
 
-Adapted by Bodmer to use the faster TFT_ILI9341_ESP library:
-https://github.com/Bodmer/TFT_ILI9341_ESP
+Adapted by Bodmer to use the faster TFT_eSPI library:
+https://github.com/Bodmer/TFT_eSPI
 
 */
 
@@ -38,6 +38,10 @@ const float UTC_OFFSET = 0;
 const boolean IS_METRIC = true; // Temperature only? Wind speed units appear to stay in mph. To do: investigate <<<<<<<<<<<<<<<<<<<<<<<<<
 const String WUNDERGRROUND_API_KEY = "<WUNDERGROUND KEY HERE>";
 const String WUNDERGRROUND_LANGUAGE = "EN";
+
+
+//const String WUNDERGROUND_COUNTRY = "US";
+//const String WUNDERGROUND_CITY = "FL/Boca_Raton"; // <<<<<<<< This is the format to use for US States and for cities with spaces in their name
 const String WUNDERGROUND_COUNTRY = "Peru";
 const String WUNDERGROUND_CITY = "Lima";
 

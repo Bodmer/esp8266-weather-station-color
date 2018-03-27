@@ -17,8 +17,8 @@
   SOFTWARE.
   See more at http://blog.squix.ch
 
-  Adapted by Bodmer to use the faster TFT_ILI9341_ESP library:
-  https://github.com/Bodmer/TFT_ILI9341_ESP
+  Adapted by Bodmer to use the TFT_eSPI library:
+  https://github.com/Bodmer/TFT_eSPI
 
   Plus:
   Minor changes to text placement and auto-blanking out old text with background colour padding
@@ -29,13 +29,15 @@
   The ` character has been changed to a degree symbol in the 36 point font
   New smart WU splash startup screen and updated progress messages
   Display does not need to be blanked between updates
-  Icons nudged about slightly to add wind direction
+  Icons nudged about slightly to add wind direction + speed
 */
+
+#define SERIAL_MESSAGES // See also screenshot sketch tab
 
 #include <Arduino.h>
 
 #include <SPI.h>
-#include <TFT_ILI9341_ESP.h> // Hardware-specific library
+#include <TFT_eSPI.h> // Hardware-specific library
 
 // Additional UI functions
 #include "GfxUi.h"
@@ -69,7 +71,7 @@
    Important: see settings.h to configure your settings!!!
  * ***************************/
 
-TFT_ILI9341_ESP tft = TFT_ILI9341_ESP();       // Invoke custom library
+TFT_eSPI tft = TFT_eSPI();       // Invoke custom library
 
 boolean booted = true;
 
@@ -99,7 +101,9 @@ void drawSeparator(uint16_t y);
 long lastDownloadUpdate = millis();
 
 void setup() {
+#ifdef SERIAL_MESSAGES
   Serial.begin(250000);
+#endif
   tft.begin();
   tft.fillScreen(TFT_BLACK);
 
@@ -121,7 +125,7 @@ void setup() {
   tft.drawString("Connecting to WiFi", 120, 200);
   tft.setTextPadding(240); // Pad next drawString() text to full width to over-write old text
 
-  //screenshotToConsole();
+  //screenServer();
 
   //WiFiManager
   //Local intialization. Once its business is done, there is no need to keep it around
@@ -149,10 +153,12 @@ void setup() {
   tft.drawString(" ", 120, 260);  // Clear line
   downloadResources();
   //listFiles();
+  tft.setTextDatum(BC_DATUM);
+  tft.setTextPadding(240); // Pad next drawString() text to full width to over-write old text
   tft.drawString(" ", 120, 200);  // Clear line above using set padding width
-  tft.drawString("Fetching weather data...", 120, 220);
+  tft.drawString("Fetching weather data...", 120, 200);
   //delay(500);
-  
+  //screenServer();
   // load the weather information
   updateData();
 }
@@ -172,6 +178,7 @@ void loop() {
   if (millis() - lastDownloadUpdate > 1000 * UPDATE_INTERVAL_SECS) {
     updateData();
     lastDownloadUpdate = millis();
+    //screenServer();
   }
 }
 
@@ -247,7 +254,7 @@ void updateData() {
   // booted = false; // Test only
 
   if (booted) ui.drawJpeg("/WU.jpg", 0, 10); // May have already drawn this but it does not take long
-  else tft.drawCircle(22, 22, 16, TFT_DARKGREY); // Outer ring - optional
+  else tft.drawCircle(22, 22, 18, TFT_DARKGREY); // Outer ring - optional
 
   if (booted) drawProgress(20, "Updating time...");
   else fillSegment(22, 22, 0, (int) (20 * 3.6), 16, TFT_NAVY);
@@ -280,8 +287,7 @@ void updateData() {
   drawCurrentWeather();
   drawForecast();
   drawAstronomy();
-
-  //if (booted) screenshotToConsole(); // Documentation support only!
+  //if (booted) screenServer(); // Documentation support only!
   booted = false;
 }
 
@@ -301,14 +307,6 @@ void drawProgress(uint8_t percentage, String text) {
 
 // draws the clock
 void drawTime() {
-  tft.setFreeFont(&ArialRoundedMTBold_14);
-
-  String date = wunderground.getDate();
-
-  tft.setTextDatum(BC_DATUM);
-  tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.setTextPadding(tft.textWidth(" Ddd, 44 Mmm 4444 "));  // String width + margin
-  tft.drawString(date, 120, 14);
 
   tft.setFreeFont(&ArialRoundedMTBold_36);
 
@@ -317,9 +315,18 @@ void drawTime() {
   tft.setTextDatum(BC_DATUM);
   tft.setTextColor(TFT_YELLOW, TFT_BLACK);
   tft.setTextPadding(tft.textWidth(" 44:44 "));  // String width + margin
-  tft.drawString(timeNow, 120, 50);
+  tft.drawString(timeNow, 120, 53);
 
-  drawSeparator(52);
+  tft.setFreeFont(&ArialRoundedMTBold_14);
+
+  String date = wunderground.getDate();
+
+  tft.setTextDatum(BC_DATUM);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  tft.setTextPadding(tft.textWidth(" Ddd, 44 Mmm 4444 "));  // String width + margin
+  tft.drawString(date, 120, 16);
+
+  drawSeparator(54);
 
   tft.setTextPadding(0);
 }
@@ -347,7 +354,7 @@ void drawCurrentWeather() {
   splitPoint =  splitIndex(weatherText);
   if (splitPoint > 16) xpos = 235;
 
-  tft.setTextPadding(tft.textWidth(" Heavy Thunderstorms"));  // Max anticipated string width + margin
+  tft.setTextPadding(tft.textWidth("Heavy Thunderstorms"));  // Max anticipated string width
   if (splitPoint) tft.drawString(weatherText.substring(0, splitPoint), xpos, 72);
   tft.setTextPadding(tft.textWidth(" with Small Hail"));  // Max anticipated string width + margin
   tft.drawString(weatherText.substring(splitPoint), xpos, 87);
@@ -356,9 +363,10 @@ void drawCurrentWeather() {
 
   tft.setTextDatum(TR_DATUM);
   tft.setTextColor(TFT_ORANGE, TFT_BLACK);
-  tft.setTextPadding(tft.textWidth("-88`"));
 
   // Font ASCII code 96 (0x60) modified to make "`" a degree symbol
+  tft.setTextPadding(tft.textWidth("-88`")); // Max width of vales
+
   weatherText = wunderground.getCurrentTemp();
   if (weatherText.indexOf(".")) weatherText = weatherText.substring(0, weatherText.indexOf(".")); // Make it integer temperature
   if (weatherText == "") weatherText = "?";  // Handle null return
@@ -371,12 +379,21 @@ void drawCurrentWeather() {
   if (IS_METRIC) tft.drawString("C ", 221, 100);
   else  tft.drawString("F ", 221, 100);
 
-  weatherText = wunderground.getWindDir() + " ";
+  //tft.drawString(wunderground.getPressure(), 180, 30);
+  
+  weatherText = ""; //wunderground.getWindDir() + " ";
   weatherText += String((int)(wunderground.getWindSpeed().toInt() * WIND_SPEED_SCALING)) + WIND_SPEED_UNITS;
 
-  tft.setTextPadding(tft.textWidth("Variable 888 mph ")); // Max string length?
-  tft.drawString(weatherText, 114, 136);
+  tft.setTextDatum(TC_DATUM);
+  tft.setTextPadding(tft.textWidth(" 888 mph")); // Max string length?
+  tft.drawString(weatherText, 128, 136);
 
+  weatherText = wunderground.getPressure();
+
+  tft.setTextDatum(TR_DATUM);
+  tft.setTextPadding(tft.textWidth(" 8888mb")); // Max string length?
+  tft.drawString(weatherText, 230, 136);
+  
   weatherText = wunderground.getWindDir();
 
   int windAngle = 0;
@@ -392,11 +409,12 @@ void drawCurrentWeather() {
       break;
     case 3:
       compassCardinal = "NNE ENE ESE SSE SSW WSW WNW NNW";
-      windAngle = 22 + 45 * compassCardinal.indexOf(weatherText) / 4; // Should be 22.5 but accuracy is not needed!
+      windAngle = 22 + 45 * compassCardinal.indexOf(weatherText) / 4; // 22 should be 22.5 but accuracy is not needed!
       break;
     default:
       if (weatherText == "Variable") windAngle = -1;
       else {
+        //                 v23456v23456v23456v23456 character ruler
         compassCardinal = "North East  South West"; // Possible strings
         windAngle = 90 * compassCardinal.indexOf(weatherText) / 6;
       }
@@ -404,12 +422,13 @@ void drawCurrentWeather() {
   }
 
   tft.fillCircle(128, 110, 23, TFT_BLACK); // Erase old plot, radius + 1 to delete stray pixels
+  tft.drawCircle(128, 110, 22, TFT_DARKGREY);    // Outer ring - optional
   if ( windAngle >= 0 ) fillSegment(128, 110, windAngle - 15, 30, 22, TFT_GREEN); // Might replace this with a bigger rotating arrow
   tft.drawCircle(128, 110, 6, TFT_RED);
-  //tft.drawCircle(128, 110, 22, TFT_DARKGREY);    // Outer ring - optional
 
   drawSeparator(153);
 
+  tft.setTextDatum(TL_DATUM); // Reset datum to normal
   tft.setTextPadding(0); // Reset padding width to none
 }
 

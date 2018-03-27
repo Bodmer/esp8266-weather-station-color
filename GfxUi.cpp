@@ -17,8 +17,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 See more at http://blog.squix.ch
 
-Adapted by Bodmer to use the faster TFT_ILI9341_ESP library:
-https://github.com/Bodmer/TFT_ILI9341_ESP
+Adapted by Bodmer to use the faster TFT_eSPI library:
+https://github.com/Bodmer/TFT_eSPI
 
 Bodmer: Functions no longer needed weeded out, Jpeg decoder functions added
 Bodmer: drawBMP() updated to buffer in and out pixels and use screen CGRAM rotation for faster bottom up drawing (now ~2x faster)
@@ -26,7 +26,7 @@ Bodmer: drawBMP() updated to buffer in and out pixels and use screen CGRAM rotat
 
 #include "GfxUi.h"
 
-GfxUi::GfxUi(TFT_ILI9341_ESP *tft) {
+GfxUi::GfxUi(TFT_eSPI *tft) {
   _tft = tft;
 }
 
@@ -288,11 +288,13 @@ void GfxUi::jpegRender(int xpos, int ypos) {
       // Write all MCU pixels to the TFT window
       uint8_t *pImg8 = (uint8_t*)pImg;     // Convert 16 bit pointer to an 8 bit pointer
       _tft->pushColors(pImg8, mcu_pixels*2); // Send bytes via 64 byte SPI port buffer
+      //_tft->pushColors(pImg, mcu_pixels, false); // Alternative to above 2 lines <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 #else
       // Now set a MCU bounding window on the TFT to push pixels into (x, y, x + width - 1, y + height - 1)
       _tft->setAddrWindow(mcu_x, mcu_y, mcu_x + win_w - 1, mcu_y + win_h - 1);
       // Write all MCU pixels to the TFT window
-      while (mcu_pixels--) _tft->pushColor(*pImg++);
+      ////while (mcu_pixels--) _tft->pushColor(*pImg++);
+      _tft->pushColors(pImg, mcu_pixels); // Alternative to above line <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 #endif
     }
 

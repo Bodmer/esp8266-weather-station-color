@@ -18,13 +18,13 @@ SOFTWARE.
 
 See more at http://blog.squix.ch
 
-Adapted by Bodmer to use the faster TFT_ILI9341_ESP library:
-https://github.com/Bodmer/TFT_ILI9341_ESP
+Adapted by Bodmer to use the faster TFT_eSPI library:
+https://github.com/Bodmer/TFT_eSPI
 
 */
 
 
-#include <TFT_ILI9341_ESP.h> // Hardware-specific library
+#include <TFT_eSPI.h> // Hardware-specific library
 
 #define FS_NO_GLOBALS // Avoid conflict with SD library File type definition
 #include <FS.h>
@@ -42,7 +42,7 @@ https://github.com/Bodmer/TFT_ILI9341_ESP
 
 class GfxUi {
   public:
-    GfxUi(TFT_ILI9341_ESP * tft);
+    GfxUi(TFT_eSPI * tft);
     void drawBmp(String filename, uint8_t x, uint16_t y);
     void drawProgressBar(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t percentage, uint16_t frameColor, uint16_t barColor);
     void jpegInfo();
@@ -50,7 +50,7 @@ class GfxUi {
     void jpegRender(int xpos, int ypos);
     
   private:
-    TFT_ILI9341_ESP * _tft;
+    TFT_eSPI * _tft;
     uint16_t read16(fs::File &f);
     uint32_t read32(fs::File &f);
 
