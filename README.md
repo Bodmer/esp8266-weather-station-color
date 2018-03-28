@@ -26,9 +26,9 @@ json-streaming-parser via Library Manager or from this link:
 
 https://github.com/squix78/json-streaming-parser
 
-TFT_ILI9341_ESP from this link:
+TFT_eSPI from this link:
 
-https://github.com/Bodmer/TFT_ILI9341_ESP
+https://github.com/Bodmer/TFT_eSPI
 
 WiFiManager via Library Manager or from this link:
 
