@@ -4,7 +4,7 @@ https://github.com/Bodmer/DarkSkyWeather
 
 This is because Weather Underground will no longer support free API's.
 
-#------------------------------------------------------------------
+# ------------------------------------------------------------------
 
 This forked copy has been adapted to be compatible with a NodeMCU 1.0 with different pin allocations for the TFT display interface. It uses the TFT_eSPI library and includes Jpeg splash screen at startup.
 
